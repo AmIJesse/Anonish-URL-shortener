@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -73,6 +74,12 @@ func addRedirect(w http.ResponseWriter, r *http.Request) {
 
 	if redirectKey == "" || redirectTo == "" {
 		w.Write([]byte("Missing parameters"))
+		return
+	}
+
+	err := url.ParseRequestURI(redirectTo)
+	if err != nil {
+		w.Write([]byte("Not a valid URL."))
 		return
 	}
 
