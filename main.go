@@ -16,6 +16,8 @@ import (
 var store *skv.KVStore
 var err error
 
+var baseURL = "https://anoni.sh/"
+
 func main() {
 	// open the store
 	store, err = skv.Open("sessions.db")
@@ -59,7 +61,7 @@ func redirect(w http.ResponseWriter, r *http.Request) {
 	var redirectTo string
 	err := store.Get(redirectKey, &redirectTo)
 	if err != nil || redirectTo == "" {
-		http.Redirect(w, r, "https://anon.ish/", http.StatusSeeOther)
+		http.Redirect(w, r, baseURL, http.StatusSeeOther)
 		return
 	}
 
@@ -88,7 +90,7 @@ func addRedirect(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	http.Redirect(w, r, "https://anon.ish/", http.StatusSeeOther)
+	w.Write([]byte(baseURL + redirectKey))
 	return
 
 }
