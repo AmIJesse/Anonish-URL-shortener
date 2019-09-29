@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -28,10 +29,10 @@ func main() {
 	r.HandleFunc("/add", addRedirect).Methods("POST")
 	r.HandleFunc("/{key}", redirect).Methods("GET")
 
+	// For testing purposes
 	srv := &http.Server{
-		Handler: r,
-		Addr:    "127.0.0.1:8000",
-		// Good practice: enforce timeouts for servers you create!
+		Handler:      r,
+		Addr:         "127.0.0.1:8000",
 		WriteTimeout: 5 * time.Second,
 		ReadTimeout:  5 * time.Second,
 	}
@@ -39,6 +40,7 @@ func main() {
 	log.Fatal(srv.ListenAndServe())
 }
 
+// index handles returning the HTML of index.html
 func index(w http.ResponseWriter, r *http.Request) {
 	indexHTML, err := ioutil.ReadFile("index.html")
 	if err != nil {
@@ -48,9 +50,10 @@ func index(w http.ResponseWriter, r *http.Request) {
 	w.Write(indexHTML)
 }
 
+// Check if the key exists, if not forward them to our primary URL
 func redirect(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	redirectKey := vars["key"]
+	redirectKey := strings.ToValidUTF8(vars["key"], nil)
 
 	var redirectTo string
 	err := store.Get(redirectKey, &redirectTo)
@@ -63,9 +66,10 @@ func redirect(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+// Add a redirect key
 func addRedirect(w http.ResponseWriter, r *http.Request) {
-	redirectKey := r.FormValue("key")
-	redirectTo := r.FormValue("to")
+	redirectKey := strings.ToValidUTF8(r.FormValue("key"), nil)
+	redirectTo := strings.ToValidUTF8(r.FormValue("to"), nil)
 
 	if redirectKey == "" || redirectTo == "" {
 		w.Write([]byte("Missing parameters"))
