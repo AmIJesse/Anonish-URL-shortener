@@ -56,7 +56,7 @@ func index(w http.ResponseWriter, r *http.Request) {
 // Check if the key exists, if not forward them to our primary URL
 func redirect(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	redirectKey := strings.ToValidUTF8(vars["key"], nil)
+	redirectKey := strings.ToValidUTF8(vars["key"], "")
 
 	var redirectTo string
 	err := store.Get(redirectKey, &redirectTo)
@@ -71,21 +71,28 @@ func redirect(w http.ResponseWriter, r *http.Request) {
 
 // Add a redirect key
 func addRedirect(w http.ResponseWriter, r *http.Request) {
-	redirectKey := strings.ToValidUTF8(r.FormValue("key"), nil)
-	redirectTo := strings.ToValidUTF8(r.FormValue("to"), nil)
+	redirectKey := strings.ToValidUTF8(r.FormValue("key"), "")
+	redirectTo := strings.ToValidUTF8(r.FormValue("to"), "")
 
 	if redirectKey == "" || redirectTo == "" {
 		w.Write([]byte("Missing parameters"))
 		return
 	}
 
-	err := url.ParseRequestURI(redirectTo)
+	var currentRedirect string
+	store.Get(redirectKey, &currentRedirect)
+	if currentRedirect != "" {
+		w.Write([]byte("Key already taken."))
+		return
+	}
+
+	_, err = url.ParseRequestURI(redirectTo)
 	if err != nil {
 		w.Write([]byte("Not a valid URL."))
 		return
 	}
 
-	err := store.Put(redirectKey, redirectTo)
+	err = store.Put(redirectKey, redirectTo)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
