@@ -1,14 +1,15 @@
 package main
 
 import (
+	"crypto/tls"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
+	"golang.org/x/crypto/acme/autocert"
 
 	"github.com/rapidloop/skv"
 )
@@ -32,15 +33,24 @@ func main() {
 	r.HandleFunc("/add", addRedirect).Methods("POST")
 	r.HandleFunc("/{key}", redirect).Methods("GET")
 
-	// For testing purposes
-	srv := &http.Server{
-		Handler:      r,
-		Addr:         "127.0.0.1:8000",
-		WriteTimeout: 5 * time.Second,
-		ReadTimeout:  5 * time.Second,
+	certManager := autocert.Manager{
+		Prompt: autocert.AcceptTOS,
+		Cache:  autocert.DirCache("certs"),
 	}
 
-	log.Fatal(srv.ListenAndServe())
+	server := &http.Server{
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 120 * time.Second,
+		Addr:         ":443",
+		Handler:      r,
+		TLSConfig: &tls.Config{
+			GetCertificate: certManager.GetCertificate,
+		},
+	}
+
+	//http.ListenAndServe(":8000", r) // For local testing only
+	go http.ListenAndServe(":80", certManager.HTTPHandler(nil))
+	server.ListenAndServeTLS("", "")
 }
 
 // index handles returning the HTML of index.html
