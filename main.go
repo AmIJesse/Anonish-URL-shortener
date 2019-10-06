@@ -49,6 +49,7 @@ func main() {
 	}
 
 	//http.ListenAndServe(":8000", r) // For local testing only
+	//os.Exit(0)
 	go http.ListenAndServe(":80", certManager.HTTPHandler(nil))
 	server.ListenAndServeTLS("", "")
 }

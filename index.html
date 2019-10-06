@@ -1,9 +1,28 @@
 <html>
     <body>
+      <script>
+      "use strict";
+      function submitForm(oFormElement)
+      {
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+          document.getElementById("results").innerHTML =
+          this.responseText;
+        }
+        };
+        
+        xhr.onerror = function(){ document.getElementById("results").innerHTML = "Error."; console.log(this.responseText);} // failure case
+        xhr.open (oFormElement.method, oFormElement.action, true);
+        xhr.send (new FormData (oFormElement));
+        document.getElementById("results").innerHTML = "Loading...";
+        return false;
+      }
+      </script> 
 
         <h2>Create Redirect</h2>
         
-        <form action="/add" method="POST">
+        <form action="/add" method="POST" onsubmit="return submitForm(this);">
           Redirect Key (https://anon.ish/{key}):<br>
           <input type="text" autocorrect="off" autocapitalize="none" name="key" value="" placeholder="Enter a key">
           <br>
@@ -12,6 +31,9 @@
           <br><br>
           <input type="submit" value="Submit">
         </form> 
+        <h2>Result</h2>
+          <div id="results">
+        </div>
 
         <br><br><br>
         Unlike traditional URL shorteners written in PHP, we aren't running Apache/NGINX which store access logs. Full source code is available on our <a href="https://github.com/AmIJesse/Anonish-URL-shortener">github</a>.
