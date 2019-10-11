@@ -97,7 +97,7 @@ func addRedirect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !strings.Contains(redirectTo, "http://") && !strings.Contains(redirectTo, "https://") {
+	if !strings.Contains(redirectTo, "://") {
 		redirectTo = "http://" + redirectTo
 	}
 	_, err = url.ParseRequestURI(redirectTo)
