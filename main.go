@@ -106,6 +106,7 @@ func addRedirect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	redirectTo = url.QueryEscape(redirectTo)
 	err = store.Put(redirectKey, redirectTo)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
