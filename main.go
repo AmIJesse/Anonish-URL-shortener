@@ -69,6 +69,7 @@ func redirect(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	redirectKey := strings.ToValidUTF8(vars["key"], "")
 
+	print(redirectKey)
 	var redirectTo string
 	err := store.Get(redirectKey, &redirectTo)
 	if err != nil || redirectTo == "" {
@@ -113,6 +114,7 @@ func addRedirect(w http.ResponseWriter, r *http.Request) {
 	}
 
 	redirectKey = strings.ReplaceAll(redirectKey, " ", "%20")
+	print(redirectKey)
 	w.Write([]byte(baseURL + redirectKey))
 	return
 
