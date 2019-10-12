@@ -111,6 +111,8 @@ func addRedirect(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	redirectKey = strings.ReplaceAll(redirectKey, " ", "%20")
 	w.Write([]byte(baseURL + redirectKey))
 	return
 
