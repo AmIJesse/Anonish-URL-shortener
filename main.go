@@ -112,11 +112,7 @@ func addRedirect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	redirectKey = strings.ReplaceAll(redirectKey, " ", "%20")
-	redirectKey = strings.ReplaceAll(redirectKey, "<", "")
-	redirectKey = strings.ReplaceAll(redirectKey, ">", "")
-	redirectKey = strings.ReplaceAll(redirectKey, "\"", "")
-	redirectKey = strings.ReplaceAll(redirectKey, "'", "")
+	redirectKey = url.QueryEscape(redirectKey)
 	w.Write([]byte(baseURL + redirectKey))
 	return
 
