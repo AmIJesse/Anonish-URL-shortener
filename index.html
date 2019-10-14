@@ -2,27 +2,27 @@
     <body>
       <script>
       "use strict";
-      function submitForm(oFormElement)
+      function submitForm(oFormElement, divTag)
       {
         var xhr = new XMLHttpRequest();
         xhr.onreadystatechange = function() {
         if (this.readyState == 4 && this.status == 200) {
-          document.getElementById("results").innerHTML =
+          document.getElementById(divTag).innerHTML =
           this.responseText;
         }
         };
         
-        xhr.onerror = function(){ document.getElementById("results").innerHTML = "Error."; console.log(this.responseText);} // failure case
+        xhr.onerror = function(){ document.getElementById(divTag).innerHTML = "Error."; console.log(this.responseText);} // failure case
         xhr.open (oFormElement.method, oFormElement.action, true);
         xhr.send (new FormData (oFormElement));
-        document.getElementById("results").innerHTML = "Loading...";
+        document.getElementById(divTag).innerHTML = "Loading...";
         return false;
       }
       </script> 
 
         <h2>Create Redirect</h2>
         
-        <form action="/add" method="POST" onsubmit="return submitForm(this);">
+        <form action="/add" method="POST" onsubmit="return submitForm(this, 'shortenedResult');">
           Redirect Key (https://anoni.sh/{key}):<br>
           <input type="text" autocorrect="off" autocapitalize="none" name="key" value="" placeholder="Enter a key">
           <br>
@@ -31,8 +31,21 @@
           <br><br>
           <input type="submit" value="Submit">
         </form> 
-        <h2>Result</h2>
-          <div id="results">
+        <h4>Shortened URL</h4>
+        <div id="shortenedResult">
+      </div>
+        <br><br>
+
+        <h2>Check Shortened URL</h2>
+
+        <form action="/checkRedirect" method="POST" onsubmit="return submitForm(this, 'redirectURL');">
+          Shortened URL:<br>
+          <input type="text" autocorrect="off" autocapitalize="none" name="key" value="" placeholder="Enter a shortened URL">
+          <br><br>
+          <input type="submit" value="Submit">
+        </form> 
+        <h4>Redirected URL</h4>
+          <div id="redirectURL">
         </div>
 
         <br><br><br>

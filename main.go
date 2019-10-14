@@ -2,9 +2,11 @@ package main
 
 import (
 	"crypto/tls"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -31,6 +33,7 @@ func main() {
 	//Set up endpoints
 	r.HandleFunc("/", index).Methods("GET")
 	r.HandleFunc("/add", addRedirect).Methods("POST")
+	r.HandleFunc("/checkRedirect", checkRedirect).Methods("POST")
 	r.HandleFunc("/{key}", redirect).Methods("GET")
 
 	certManager := autocert.Manager{
@@ -48,8 +51,8 @@ func main() {
 		},
 	}
 
-	//http.ListenAndServe(":8000", r) // For local testing only
-	//os.Exit(0)
+	http.ListenAndServe(":8000", r) // For local testing only
+	os.Exit(0)
 	go http.ListenAndServe(":80", certManager.HTTPHandler(nil))
 	server.ListenAndServeTLS("", "")
 }
@@ -64,7 +67,7 @@ func index(w http.ResponseWriter, r *http.Request) {
 	w.Write(indexHTML)
 }
 
-// Check if the key exists, if not forward them to our primary URL
+// If a redirect exsits, forward to it, if not forward them to our primary URL
 func redirect(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	redirectKey := strings.ToValidUTF8(vars["key"], "")
@@ -77,6 +80,23 @@ func redirect(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, redirectTo, http.StatusSeeOther)
+	return
+}
+
+// Check if a redirect exists, if it does display the forward URL to the user
+func checkRedirect(w http.ResponseWriter, r *http.Request) {
+	redirectKey := strings.ToValidUTF8(r.FormValue("key"), "")
+	redirectKey = strings.Replace(redirectKey, baseURL, "", 1)
+
+	var redirectTo string
+	err := store.Get(redirectKey, &redirectTo)
+	if err != nil || redirectTo == "" {
+		fmt.Printf("%v\n%s\n", err, redirectKey)
+		w.Write([]byte("Invalid redirect key"))
+		return
+	}
+
+	w.Write([]byte(redirectTo))
 	return
 }
 
