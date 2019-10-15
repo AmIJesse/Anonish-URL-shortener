@@ -2,10 +2,11 @@
 
 Anonish is a private URL shortener, with absolutely no logging. Check it out at https://anoni.sh.
 
-# Features!
+### Features
   - Create a shortened URL with a custom shortening "key"
   - Instant redirect via status-codes, no JS redirecting
-  - Doesn't save *any* logs for user interaction
+  - Doesn't save any logs for user interaction
+  - Rate limiting, default max creations per IP per hour is 10 (All information is saved in volatile memory, nothing written to disk)
 
 ### Tech
 
@@ -24,7 +25,7 @@ nano main.go
 ```
 Edit the line that contains
 ```
-var baseURL = "https://anoni.sh/"
+baseURL = "https://anoni.sh/"
 ```
 and change it to whatever your URL will be, and save the file
 ```
@@ -45,7 +46,7 @@ go build
 ```
 
 
-### Todo
+### ToDo:
  - Rewrite the HTML so it looks cleaner
  - Add templating so we have no "hardcoded" URL in the html file
 
