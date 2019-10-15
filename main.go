@@ -2,10 +2,12 @@ package main
 
 import (
 	"crypto/tls"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -14,11 +16,34 @@ import (
 	"github.com/rapidloop/skv"
 )
 
-// Using SKV just to make it easier on ourselves
-var store *skv.KVStore
-var err error
+type creationRate struct {
+	IP        string
+	creations int
+}
 
-var baseURL = "https://anoni.sh/"
+type rateLimiter struct {
+	sync.RWMutex
+	rates map[string]int
+}
+
+// Using SKV just to make it easier on ourselves
+var (
+	store     *skv.KVStore
+	err       error
+	baseURL   = "https://anoni.sh/"
+	rateLimit = rateLimiter{}
+	maxRate   = 10
+)
+
+// resetRateLimitHourly will reset our IP rate limits every hour
+func resetRateLimitsHourly() {
+	for {
+		time.Sleep(1 * time.Hour)
+		rateLimit.Lock()
+		rateLimit.rates = make(map[string]int)
+		rateLimit.Unlock()
+	}
+}
 
 func main() {
 	// Open the store
@@ -27,6 +52,10 @@ func main() {
 		panic(err)
 	}
 	defer store.Close()
+
+	// Initialize the rate limits, and start the hourly resetter
+	rateLimit.rates = make(map[string]int)
+	go resetRateLimitsHourly()
 
 	r := mux.NewRouter()
 	// Set up endpoints
@@ -92,8 +121,8 @@ func checkRedirect(w http.ResponseWriter, r *http.Request) {
 	redirectKey := strings.ToValidUTF8(r.FormValue("url"), "")
 	redirectKey = strings.Replace(redirectKey, baseURL, "", 1)
 
-	// Check where the key points to, if it's invalid, tell the user. If it is valid send the
-	// URL to the user
+	// Check where the key points to, if it's invalid, tell the user. If it is valid send
+	// the URL to the user
 	var redirectTo string
 	err := store.Get(redirectKey, &redirectTo)
 	if err != nil || redirectTo == "" {
@@ -137,6 +166,17 @@ func addRedirect(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Not a valid URL."))
 		return
 	}
+
+	// check user rate limit, if they have saved {maxRate} keys this hour, let them know
+	userIP := strings.Split(r.RemoteAddr, ":")[0]
+	rateLimit.Lock()
+	defer rateLimit.Unlock()
+	userRate := rateLimit.rates[userIP]
+	if userRate >= maxRate {
+		w.Write([]byte(fmt.Sprintf("Hit limit of %d shortens per hour.", maxRate)))
+		return
+	}
+	rateLimit.rates[userIP] = userRate + 1
 
 	// Store the new key/value to the store
 	err = store.Put(redirectKey, redirectTo)
