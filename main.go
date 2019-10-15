@@ -2,7 +2,6 @@ package main
 
 import (
 	"crypto/tls"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -90,7 +89,6 @@ func checkRedirect(w http.ResponseWriter, r *http.Request) {
 	var redirectTo string
 	err := store.Get(redirectKey, &redirectTo)
 	if err != nil || redirectTo == "" {
-		fmt.Printf("%v\n%s\n", err, redirectKey)
 		w.Write([]byte("Invalid redirect key"))
 		return
 	}
