@@ -1,8 +1,7 @@
 <html>
   <title>Anonish URL shortener</title>
-    <body>
-      <script>
-      "use strict";
+  <body>
+    <script>
       function submitForm(oFormElement, divTag)
       {
         var xhr = new XMLHttpRequest();
@@ -19,40 +18,42 @@
         document.getElementById(divTag).innerHTML = "Loading...";
         return false;
       }
-      </script> 
+    </script> 
 
-        <h2>Create Redirect</h2>
-        
-        <form action="/add" method="POST" onsubmit="return submitForm(this, 'shortenedResult');">
-          Redirect Key (https://anoni.sh/{key}):<br>
-          <input type="text" autocorrect="off" autocapitalize="none" name="key" value="" placeholder="Enter a key">
-          <br>
-          Redirect To:<br>
-          <input type="text" autocorrect="off" autocapitalize="none" name="to" value="" placeholder="Enter a URL to redirect to">
-          <br><br>
-          <input type="submit" value="Submit">
-        </form> 
-        <h4>Shortened URL</h4>
-        <div id="shortenedResult">
-      </div>
-        <br><br>
+    <h2>Create Redirect</h2>
+      
+    <form action="/add" method="POST" onsubmit="return submitForm(this, 'shortenedResult');">
+      Redirect Key (https://anoni.sh/{key}):<br>
+      <input type="text" autocorrect="off" autocapitalize="none" name="key" value="" placeholder="Enter a key">
+      <br>
+      Redirect To:<br>
+      <input type="text" autocorrect="off" autocapitalize="none" name="to" value="" placeholder="Enter a URL to redirect to">
+      <br><br>
+      <input type="submit" value="Submit">
+    </form> 
 
-        <h2>Check Shortened URL</h2> 
-        <p>Paste a shortened URL here to check where it redirects, without following it.</p>
-        <form action="/checkRedirect" method="POST" onsubmit="return submitForm(this, 'redirectURL');">
-          Shortened URL:<br>
-          <input type="text" autocorrect="off" autocapitalize="none" name="url" value="" placeholder="Enter a shortened URL">
-          <br><br>
-          <input type="submit" value="Submit">
-        </form> 
-        <h4>Redirected URL</h4>
-          <div id="redirectURL">
-        </div>
+    <h4>Shortened URL</h4>
+    <div id="shortenedResult">
+    </div>
+    <br><br>
 
-        <br><br>
-        <p>We include absolutely no logging, and unlike traditional URL shorteners written in PHP we aren't running Apache/NGINX which store access logs by default. Full source code is available on our <a href="https://github.com/AmIJesse/Anonish-URL-shortener">github</a>.</p>
-        <p>Brought to you by <a href="https://twitter.com/theinsecurenet">Internet Of Insecurity</a></p>
-        </body>
+    <h2>Check Shortened URL</h2> 
+    <p>Paste a shortened URL here to check where it redirects, without following it.</p>
+    <form action="/checkRedirect" method="POST" onsubmit="return submitForm(this, 'redirectURL');">
+      Shortened URL:<br>
+      <input type="text" autocorrect="off" autocapitalize="none" name="url" value="" placeholder="Enter a shortened URL">
+      <br><br>
+      <input type="submit" value="Submit">
+    </form> 
+
+    <h4>Redirected URL</h4>
+    <div id="redirectURL">
+    </div>
+
+    <br><br>
+    <p>We include absolutely no logging, and unlike traditional URL shorteners written in PHP we aren't running Apache/NGINX which store access logs by default. Full source code is available on our <a href="https://github.com/AmIJesse/Anonish-URL-shortener">github</a>.</p>
+    <p>Brought to you by <a href="https://twitter.com/theinsecurenet">Internet Of Insecurity</a></p>
+  </body>
 
 
 </html>
