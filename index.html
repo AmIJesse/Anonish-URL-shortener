@@ -23,7 +23,7 @@
     <h2>Create Redirect</h2>
       
     <form action="/add" method="POST" onsubmit="return submitForm(this, 'shortenedResult');">
-      Redirect Key (https://anoni.sh/{key}):<br>
+      Redirect Key ({{.URL}}{key}):<br>
       <input type="text" autocorrect="off" autocapitalize="none" name="key" value="" placeholder="Enter a key">
       <br>
       Redirect To:<br>

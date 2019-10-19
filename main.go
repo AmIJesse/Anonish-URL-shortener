@@ -3,7 +3,7 @@ package main
 import (
 	"crypto/tls"
 	"fmt"
-	"io/ioutil"
+	"html/template"
 	"net/http"
 	"net/url"
 	"os"
@@ -27,6 +27,11 @@ type creationRate struct {
 type rateLimiter struct {
 	sync.RWMutex
 	rates map[string]int
+}
+
+// tmplIndex hold template data for the index page, currently only the URL
+type tmplIndex struct {
+	URL string
 }
 
 // Analytics Tracker keeps track of how many keys are created in the past 24 hours, and how
@@ -112,12 +117,13 @@ func main() {
 
 // index handles returning the HTML of index.html
 func index(w http.ResponseWriter, r *http.Request) {
-	indexHTML, err := ioutil.ReadFile("index.html")
+	htmlData := tmplIndex{URL: baseURL}
+	tmpl, err := template.ParseFiles("index.html")
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	w.Write(indexHTML)
+	tmpl.Execute(w, htmlData)
 }
 
 // Stats will show a user (if they provide the proper key) basic usage stats

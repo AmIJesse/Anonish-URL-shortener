@@ -30,14 +30,6 @@ baseURL = "https://anoni.sh/"
 ```
 and change it to whatever your URL will be, and save the file
 ```
-nano index.html
-```
-change the line that contains
-```
-Redirect Key (https://anoni.sh/{key}):<br>
-```
-and change that to your URL as well, and save the file
-```
 go get
 go run main.go
 ```
@@ -49,7 +41,6 @@ go build
 
 ### ToDo:
  - Rewrite the HTML so it looks cleaner
- - Add templating so we have no "hardcoded" URL in the html file
 
 License
 ----
