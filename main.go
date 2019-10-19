@@ -49,6 +49,8 @@ var (
 
 	analytics = analyticsTracker{}
 	adminKey  string
+
+	invalidKeyChars = []string{"/", "\\", "\"", ":", "*", "?", "<", ">"} // Keys that cause errors on redirection
 )
 
 // resetRateLimitHourly will reset our IP rate limits every hour
@@ -160,7 +162,8 @@ func stats(w http.ResponseWriter, r *http.Request) {
 	analytics.Unlock()
 
 	// Print the results to the user
-	w.Write([]byte(fmt.Sprintf("Creations today: %d\nRedirects today: %d\n", creationsToday, redirectsToday)))
+	w.Write([]byte(fmt.Sprintf("Creations today: %d\nRedirects today: %d\n",
+		creationsToday, redirectsToday)))
 	return
 }
 
@@ -211,6 +214,11 @@ func addRedirect(w http.ResponseWriter, r *http.Request) {
 	// Get the POST params, and convert them both to UTF-8
 	redirectKey := strings.ToValidUTF8(r.FormValue("key"), "")
 	redirectTo := strings.ToValidUTF8(r.FormValue("to"), "")
+
+	// Strip invalid characters out of the redirect key
+	for _, v := range invalidKeyChars {
+		redirectKey = strings.ReplaceAll(redirectKey, v, "")
+	}
 
 	// Verify parameters aren't empty
 	if redirectKey == "" || redirectTo == "" {
