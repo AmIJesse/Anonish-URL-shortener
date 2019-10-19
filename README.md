@@ -7,6 +7,7 @@ Anonish is a private URL shortener, with absolutely no logging. Check it out at 
   - Instant redirect via status-codes, no JS redirecting
   - Doesn't save any logs for user interaction
   - Rate limiting, default max creations per IP per hour is 10 (All information is saved in volatile memory, nothing written to disk)
+  - Anonymous analytics (timestamp only) for keeping track of usage on a day by day basis
 
 ### Tech
 
