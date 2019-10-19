@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -16,23 +17,38 @@ import (
 	"github.com/rapidloop/skv"
 )
 
+// Creation rate is used to keep track of how many keys a user has created in the last hour
 type creationRate struct {
 	IP        string
 	creations int
 }
 
+// The rate limiter keeps a list of creationRates, and a mutex to lock it during read/modify
 type rateLimiter struct {
 	sync.RWMutex
 	rates map[string]int
 }
 
+// Analytics Tracker keeps track of how many keys are created in the past 24 hours, and how
+// many redirects have been followed in the last 24 hours (Only keeping track of timestamps,
+// no URL data)
+type analyticsTracker struct {
+	sync.RWMutex
+	dailyCreations []time.Time
+	dailyRedirects []time.Time
+}
+
 // Using SKV just to make it easier on ourselves
 var (
-	store     *skv.KVStore
-	err       error
-	baseURL   = "https://anoni.sh/"
+	store   *skv.KVStore
+	err     error
+	baseURL = "https://anoni.sh/"
+
 	rateLimit = rateLimiter{}
 	maxRate   = 10
+
+	analytics = analyticsTracker{}
+	adminKey  string
 )
 
 // resetRateLimitHourly will reset our IP rate limits every hour
@@ -53,6 +69,11 @@ func main() {
 	}
 	defer store.Close()
 
+	adminKey = os.Getenv("anoniAdminKey")
+	if adminKey == "" {
+		panic("Missing environment key \"anoniAdminKey\"")
+	}
+
 	// Initialize the rate limits, and start the hourly resetter
 	rateLimit.rates = make(map[string]int)
 	go resetRateLimitsHourly()
@@ -62,6 +83,7 @@ func main() {
 	r.HandleFunc("/", index).Methods("GET")
 	r.HandleFunc("/add", addRedirect).Methods("POST")
 	r.HandleFunc("/checkRedirect", checkRedirect).Methods("POST")
+	r.HandleFunc("/stats", stats).Methods("GET")
 	r.HandleFunc("/{key}", redirect).Methods("GET")
 
 	// Autocert makes it easy to manage SSL certs
@@ -96,6 +118,52 @@ func index(w http.ResponseWriter, r *http.Request) {
 	w.Write(indexHTML)
 }
 
+// Stats will show a user (if they provide the proper key) basic usage stats
+// such as how many new keys have beencreated in the past day, and how many
+// users have followed a shortened link. No key/link data provided
+func stats(w http.ResponseWriter, r *http.Request) {
+	// Get the "key" value passed as a GET param (I know), if it's not included
+	// pass it as a redirect, if it is included but incorrect redirect them to
+	// the homepage
+	key := r.FormValue("key")
+	if key == "" {
+		redirect(w, r)
+		return
+	}
+	if key != adminKey {
+		fmt.Println("Incorrect admin key")
+		http.Redirect(w, r, baseURL, http.StatusSeeOther)
+		return
+	}
+
+	// Loop over the dailyCreations and dailyRedirect values of our analyics struct
+	// and only save the ones that are from the last 24 hours, and save the ammount
+	analytics.Lock()
+	var newCreationsToday []time.Time
+	var newRedirectsToday []time.Time
+
+	for _, v := range analytics.dailyCreations {
+		if time.Since(v) < (time.Hour * 24) {
+			newCreationsToday = append(newCreationsToday, v)
+		}
+	}
+	analytics.dailyCreations = newCreationsToday
+	creationsToday := len(analytics.dailyCreations)
+
+	for _, v := range analytics.dailyRedirects {
+		if time.Since(v) < (time.Hour * 24) {
+			newRedirectsToday = append(newRedirectsToday, v)
+		}
+	}
+	analytics.dailyRedirects = newRedirectsToday
+	redirectsToday := len(analytics.dailyRedirects)
+	analytics.Unlock()
+
+	// Print the results to the user
+	w.Write([]byte(fmt.Sprintf("Creations today: %d\nRedirects today: %d\n", creationsToday, redirectsToday)))
+	return
+}
+
 // If a redirect exsits, forward to it, if not forward them to our primary URL
 func redirect(w http.ResponseWriter, r *http.Request) {
 	// Read input and convert the passed key to valid UTF8
@@ -110,6 +178,10 @@ func redirect(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, baseURL, http.StatusSeeOther)
 		return
 	}
+
+	analytics.Lock()
+	analytics.dailyRedirects = append(analytics.dailyRedirects, time.Now())
+	analytics.Unlock()
 
 	http.Redirect(w, r, redirectTo, http.StatusSeeOther)
 	return
@@ -177,6 +249,11 @@ func addRedirect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	rateLimit.rates[userIP] = userRate + 1
+
+	// Add a new creation timestamp to the "analytics"
+	analytics.Lock()
+	analytics.dailyCreations = append(analytics.dailyCreations, time.Now())
+	analytics.Unlock()
 
 	// Store the new key/value to the store
 	err = store.Put(redirectKey, redirectTo)
