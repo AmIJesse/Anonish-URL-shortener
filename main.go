@@ -60,7 +60,7 @@ var (
 	analytics = analyticsTracker{}
 	adminKey  string
 
-	invalidKeyChars = []string{"/", "\\", "\"", ":", "*", "?", "<", ">"} // Keys that cause errors on redirection
+	invalidKeyChars = []string{"/", "\\", "\"", ":", "*", "?", "<", ">", " "} // Keys that cause errors on redirection
 )
 
 // resetRateLimitHourly will reset our IP rate limits every hour
