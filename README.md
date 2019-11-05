@@ -26,9 +26,11 @@ nano main.go
 ```
 Edit the line that contains
 ```
-baseURL = "https://anoni.sh/"
-```
-and change it to whatever your URL will be, and save the file
+	baseURL    = "https://anoni.sh/"
+	htmlTitle  = "Anoni.sh URL Shortener"
+	htmlHeader = "anoni.sh"
+  ```
+and change their respective values, save the file
 ```
 go get
 go run main.go
@@ -40,7 +42,7 @@ go build
 
 
 ### ToDo:
- - Rewrite the HTML so it looks cleaner
+
 
 License
 ----

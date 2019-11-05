@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"html/template"
+	"mime"
 	"net/http"
 	"net/url"
 	"os"
@@ -31,7 +32,9 @@ type rateLimiter struct {
 
 // tmplIndex hold template data for the index page, currently only the URL
 type tmplIndex struct {
-	URL string
+	URL    string
+	TITLE  string
+	HEADER string
 }
 
 // Analytics Tracker keeps track of how many keys are created in the past 24 hours, and how
@@ -45,9 +48,11 @@ type analyticsTracker struct {
 
 // Using SKV just to make it easier on ourselves
 var (
-	store   *skv.KVStore
-	err     error
-	baseURL = "https://anoni.sh/"
+	store      *skv.KVStore
+	err        error
+	baseURL    = "https://anoni.sh/"
+	htmlTitle  = "Anoni.sh URL Shortener"
+	htmlHeader = "anoni.sh"
 
 	rateLimit = rateLimiter{}
 	maxRate   = 10
@@ -93,6 +98,10 @@ func main() {
 	r.HandleFunc("/stats", stats).Methods("GET")
 	r.HandleFunc("/{key}", redirect).Methods("GET")
 
+	fs := http.StripPrefix("/static/", http.FileServer(http.Dir("./assets/")))
+	r.PathPrefix("/static/").Handler(fs)
+	go mime.AddExtensionType(".js", "application/javascript; charset=utf-8")
+
 	// Autocert makes it easy to manage SSL certs
 	certManager := autocert.Manager{
 		Prompt: autocert.AcceptTOS,
@@ -117,7 +126,12 @@ func main() {
 
 // index handles returning the HTML of index.html
 func index(w http.ResponseWriter, r *http.Request) {
-	htmlData := tmplIndex{URL: baseURL}
+
+	htmlData := tmplIndex{
+		URL:    baseURL,
+		TITLE:  htmlTitle,
+		HEADER: htmlHeader,
+	}
 	tmpl, err := template.ParseFiles("index.html")
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -139,7 +153,6 @@ func stats(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if key != adminKey {
-		fmt.Println("Incorrect admin key")
 		http.Redirect(w, r, baseURL, http.StatusSeeOther)
 		return
 	}
